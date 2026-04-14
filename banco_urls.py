@@ -1,9 +1,8 @@
 """
 banco_urls.py
--------------
-Módulo responsável por carregar, validar e gerenciar o banco de URLs do browser.
+Módulo responsável por carregar e gerenciar as URLs do sistema.
 
-Grupo 05 - Enquanto Funcionar Tá Bom
+Grupo: Enquanto Funcionar Tá Bom
 Disciplina: Programação Orientada a Objetos
 """
 
@@ -12,30 +11,26 @@ import re
 
 class BancoURLs:
     """
-    Gerencia o banco de URLs válidas conhecidas pelo browser.
+    Classe que gerencia as URLs cadastradas no sistema.
 
-    As URLs são carregadas de um arquivo texto na inicialização e podem
-    ser adicionadas dinamicamente via comando #add durante a execução.
-
-    Attributes:
-        _urls (set): conjunto de URLs cadastradas (sem duplicatas).
-        _arquivo (str): caminho do arquivo de persistência.
+    As URLs são carregadas de um arquivo e também podem ser adicionadas
+    durante a execução do programa.
     """
 
-    # Expressão regular para validar formato de URL
+    # Regex para validar o formato das URLs
     _FORMATO_URL = re.compile(
-        r'^(https?://)?'           # protocolo opcional (http:// ou https://)
-        r'(www\.)?'                # www opcional
-        r'[\w\-]+(\.[\w\-]+)+'    # domínio (ex: ifpb.edu.br)
-        r'(/[\w\-./]*)?$'          # caminhos internos opcionais (ex: /tsi/alunos)
+        r'^(https?://)?'           # http:// ou https:// (opcional)
+        r'(www\.)?'                # www. (opcional)
+        r'[\w\-]+(\.[\w\-]+)+'     # domínio (ex: google.com)
+        r'(/[\w\-./]*)?$'          # caminho opcional (ex: /teste)
     )
 
     def __init__(self, arquivo: str = "urls.txt"):
         """
-        Inicializa o banco carregando as URLs do arquivo.
+        Inicializa o banco de URLs.
 
         Args:
-            arquivo (str): Caminho para o arquivo de URLs. Padrão: 'urls.txt'.
+            arquivo (str): arquivo onde as URLs estão armazenadas.
         """
         self._urls = set()
         self._arquivo = arquivo
@@ -43,11 +38,8 @@ class BancoURLs:
 
     def _carregar_arquivo(self) -> None:
         """
-        Lê o arquivo de URLs e popula o banco interno.
-        Linhas em branco e comentários (iniciados por #) são ignorados.
-
-        Raises:
-            FileNotFoundError: Se o arquivo não for encontrado (aviso, não encerra).
+        Lê o arquivo e adiciona as URLs válidas ao sistema.
+        Ignora linhas vazias e comentários.
         """
         try:
             with open(self._arquivo, "r", encoding="utf-8") as f:
@@ -61,13 +53,7 @@ class BancoURLs:
 
     def validar_formato(self, url: str) -> bool:
         """
-        Verifica se a URL segue um formato válido.
-
-        Args:
-            url (str): URL a ser validada.
-
-        Returns:
-            bool: True se o formato for válido, False caso contrário.
+        Verifica se a URL está em um formato válido.
         """
         if not url or not url.strip():
             return False
@@ -75,28 +61,19 @@ class BancoURLs:
 
     def existe(self, url: str) -> bool:
         """
-        Verifica se uma URL está cadastrada no banco.
-
-        Args:
-            url (str): URL a ser verificada.
-
-        Returns:
-            bool: True se a URL estiver cadastrada, False caso contrário.
+        Verifica se a URL já está cadastrada.
         """
         return url.strip() in self._urls
 
     def adicionar(self, url: str) -> bool:
         """
-        Cadastra uma nova URL no banco e salva no arquivo.
-
-        Args:
-            url (str): URL a ser cadastrada.
+        Adiciona uma nova URL ao sistema.
 
         Returns:
-            bool: True se adicionada com sucesso, False se já existia ou formato inválido.
+            True se adicionou, False se já existia.
 
         Raises:
-            ValueError: Se o formato da URL for inválido.
+            ValueError se o formato for inválido.
         """
         url = url.strip()
 
@@ -104,7 +81,7 @@ class BancoURLs:
             raise ValueError(f"Formato de URL inválido: '{url}'")
 
         if self.existe(url):
-            return False  # já cadastrada
+            return False
 
         self._urls.add(url)
         self._salvar_url_no_arquivo(url)
@@ -112,10 +89,7 @@ class BancoURLs:
 
     def _salvar_url_no_arquivo(self, url: str) -> None:
         """
-        Appenda uma nova URL ao arquivo de persistência.
-
-        Args:
-            url (str): URL a ser salva.
+        Salva a nova URL no arquivo.
         """
         try:
             with open(self._arquivo, "a", encoding="utf-8") as f:
@@ -125,18 +99,12 @@ class BancoURLs:
 
     def listar(self) -> list:
         """
-        Retorna a lista de todas as URLs cadastradas, ordenadas alfabeticamente.
-
-        Returns:
-            list: Lista de URLs cadastradas.
+        Retorna todas as URLs cadastradas.
         """
         return sorted(self._urls)
 
     def total(self) -> int:
         """
-        Retorna o número de URLs cadastradas.
-
-        Returns:
-            int: Quantidade de URLs no banco.
+        Retorna a quantidade de URLs cadastradas.
         """
         return len(self._urls)
