@@ -1,9 +1,14 @@
-www.ifpb.edu.br
-www.google.com.br
-www.apple.com
-www.github.com
-www.youtube.com
-http://example.com
-http://example.com/register
-www.detran.pb.gov.br
-www.meusite.com.br
+# URLs cadastradas
+# Formato: <url> <arquivo_txt>
+
+www.ifpb.edu.br paginas/ifpb.txt
+www.ifpb.edu.br/tsi paginas/ifpb_tsi.txt
+www.ifpb.edu.br/tsi/professores paginas/ifpb_tsi_professores.txt
+www.ifpb.edu.br/tsi/alunos paginas/ifpb_tsi_alunos.txt
+www.ifpb.edu.br/rc paginas/ifpb_rc.txt
+www.ifpb.edu.br/rc/coordenacao paginas/ifpb_rc_coordenacao.txt
+www.ifpb.edu.br/rc/coordenacao/matriz_curricular paginas/ifpb_rc_matriz.txt
+www.google.com.br paginas/google.txt
+www.github.com paginas/github.txt
+www.youtube.com paginas/youtube.txt
+www.python.org paginas/python.txt
