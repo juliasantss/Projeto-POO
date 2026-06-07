@@ -1,110 +1,189 @@
-"""
-banco_urls.py
-Módulo responsável por carregar e gerenciar as URLs do sistema.
-
-Grupo: Enquanto Funcionar Tá Bom
-Disciplina: Programação Orientada a Objetos
-"""
+# banco_urls.py
+# gerencia as urls cadastradas e suas paginas internas
+# usa um dicionario aninhado pra representar a hierarquia de paginas
+#
+# estrutura interna (arvore):
+# {
+#   "www.ifpb.edu.br": {
+#     "arquivo": "paginas/ifpb.txt",
+#     "filhos": {
+#       "tsi": {
+#         "arquivo": "paginas/ifpb_tsi.txt",
+#         "filhos": { "alunos": {...}, "professores": {...} }
+#       }
+#     }
+#   }
+# }
+#
+# Grupo 05 - Enquanto Funcionar Ta Bom
 
 import re
-
+import os
 
 class BancoURLs:
-    """
-    Classe que gerencia as URLs cadastradas no sistema.
 
-    As URLs são carregadas de um arquivo e também podem ser adicionadas
-    durante a execução do programa.
-    """
-
-    # Regex para validar o formato das URLs
+    # regex pra validar formato de url
+    # aceita: google.com | www.google.com | http://google.com | http://site.com/pagina
     _FORMATO_URL = re.compile(
-        r'^(https?://)?'           # http:// ou https:// (opcional)
-        r'(www\.)?'                # www. (opcional)
-        r'[\w\-]+(\.[\w\-]+)+'     # domínio (ex: google.com)
-        r'(/[\w\-./]*)?$'          # caminho opcional (ex: /teste)
+        r'^(https?://)?'
+        r'(www\.)?'
+        r'[\w\-]+(\.[\w\-]+)+'
+        r'(/[\w\-./]*)?$'
     )
 
-    def __init__(self, arquivo: str = "urls.txt"):
-        """
-        Inicializa o banco de URLs.
-
-        Args:
-            arquivo (str): arquivo onde as URLs estão armazenadas.
-        """
-        self._urls = set()
+    def __init__(self, arquivo="urls.txt"):
+        self._arvore  = {}   # dicionario aninhado com todas as urls
         self._arquivo = arquivo
-        self._carregar_arquivo()
+        self._carregar()
 
-    def _carregar_arquivo(self) -> None:
-        """
-        Lê o arquivo e adiciona as URLs válidas ao sistema.
-        Ignora linhas vazias e comentários.
-        """
+    # --- metodos internos ---
+
+    def _novo_no(self, arquivo=""):
+        # cria um no vazio pra arvore
+        return {"arquivo": arquivo, "filhos": {}}
+
+    def _chave(self, url):
+        # remove http/https pra padronizar a chave na arvore
+        # mas MANTEM o www pra nao perder o formato original
+        url = url.strip()
+        url = re.sub(r'^https?://', '', url)
+        return url
+
+    def _carregar(self):
+        # le o arquivo e monta a arvore de urls
+        # formato de cada linha: www.site.com paginas/arquivo.txt
         try:
             with open(self._arquivo, "r", encoding="utf-8") as f:
                 for linha in f:
-                    url = linha.strip()
-                    if url and not url.startswith("#"):
-                        if self.validar_formato(url):
-                            self._urls.add(url)
+                    linha = linha.strip()
+                    if not linha or linha.startswith("#"):
+                        continue
+                    partes  = linha.split()
+                    url     = partes[0]
+                    arquivo = partes[1] if len(partes) > 1 else ""
+                    if self.validar_formato(url):
+                        self._inserir(url, arquivo)
         except FileNotFoundError:
-            print(f"[AVISO] Arquivo '{self._arquivo}' não encontrado. Banco iniciado vazio.")
+            print(f"[AVISO] '{self._arquivo}' nao encontrado. Banco vazio.")
 
-    def validar_formato(self, url: str) -> bool:
-        """
-        Verifica se a URL está em um formato válido.
-        """
+    def _inserir(self, url, arquivo=""):
+        # coloca a url na arvore mantendo a hierarquia
+        chave    = self._chave(url)
+        partes   = chave.split("/")
+        dominio  = partes[0]      # ex: www.ifpb.edu.br
+        caminhos = partes[1:]     # ex: ['tsi', 'alunos']
+
+        if dominio not in self._arvore:
+            self._arvore[dominio] = self._novo_no()
+
+        no = self._arvore[dominio]
+
+        for parte in caminhos:
+            if not parte:
+                continue
+            if parte not in no["filhos"]:
+                no["filhos"][parte] = self._novo_no()
+            no = no["filhos"][parte]
+
+        if arquivo:
+            no["arquivo"] = arquivo
+
+    def _buscar_no(self, url):
+        # retorna o no da arvore da url ou None se nao existir
+        chave    = self._chave(url)
+        partes   = chave.split("/")
+        dominio  = partes[0]
+        caminhos = partes[1:]
+
+        if dominio not in self._arvore:
+            return None
+
+        no = self._arvore[dominio]
+
+        for parte in caminhos:
+            if not parte:
+                continue
+            if parte not in no["filhos"]:
+                return None
+            no = no["filhos"][parte]
+
+        return no
+
+    def _salvar(self, url, arquivo=""):
+        # appenda a nova url no arquivo pra persistir
+        try:
+            with open(self._arquivo, "a", encoding="utf-8") as f:
+                linha = url if not arquivo else f"{url} {arquivo}"
+                f.write(linha + "\n")
+        except OSError as e:
+            print(f"[AVISO] Nao foi possivel salvar: {e}")
+
+    # --- api publica ---
+
+    def validar_formato(self, url):
         if not url or not url.strip():
             return False
         return bool(self._FORMATO_URL.match(url.strip()))
 
-    def existe(self, url: str) -> bool:
-        """
-        Verifica se a URL já está cadastrada.
-        """
-        return url.strip() in self._urls
+    def existe(self, url):
+        return self._buscar_no(url) is not None
 
-    def adicionar(self, url: str) -> bool:
-        """
-        Adiciona uma nova URL ao sistema.
+    def arquivo_da_url(self, url):
+        no = self._buscar_no(url)
+        if no is None:
+            return ""
+        return no.get("arquivo", "")
 
-        Returns:
-            True se adicionou, False se já existia.
+    def links_internos(self, url):
+        # retorna as subpaginas disponiveis da url atual
+        no = self._buscar_no(url)
+        if no is None:
+            return []
+        return ["/" + filho for filho in no["filhos"].keys()]
 
-        Raises:
-            ValueError se o formato for inválido.
-        """
+    def resolver_caminho(self, home, caminho):
+        # transforma /tsi em www.ifpb.edu.br/tsi
+        # tenta como subpagina do home atual primeiro
+        # se nao encontrar, tenta da raiz do dominio
+        chave_home = self._chave(home)
+        caminho    = caminho.lstrip("/")
+
+        # tenta: home_atual + /caminho
+        tentativa = f"{chave_home}/{caminho}"
+        if self._buscar_no(tentativa) is not None:
+            # reconstroi com o prefixo original (www ou sem www)
+            return self._prefixo_original(home) + tentativa[len(self._chave(home).split('/')[0]):]
+
+        # tenta: dominio_raiz + /caminho
+        dominio = chave_home.split("/")[0]
+        return self._prefixo_original(home) + f"/{caminho}" if "/" not in chave_home else dominio + f"/{caminho}"
+
+    def _prefixo_original(self, url):
+        # devolve o prefixo do dominio como foi digitado originalmente
+        # ex: "www.ifpb.edu.br/tsi" -> "www.ifpb.edu.br"
+        chave = self._chave(url)
+        return chave.split("/")[0]
+
+    def adicionar(self, url, arquivo=""):
         url = url.strip()
-
         if not self.validar_formato(url):
-            raise ValueError(f"Formato de URL inválido: '{url}'")
-
+            raise ValueError(f"'{url}' nao tem formato de URL valido")
         if self.existe(url):
             return False
-
-        self._urls.add(url)
-        self._salvar_url_no_arquivo(url)
+        self._inserir(url, arquivo)
+        self._salvar(url, arquivo)
         return True
 
-    def _salvar_url_no_arquivo(self, url: str) -> None:
-        """
-        Salva a nova URL no arquivo.
-        """
-        try:
-            with open(self._arquivo, "a", encoding="utf-8") as f:
-                f.write(url + "\n")
-        except OSError as e:
-            print(f"[AVISO] Não foi possível salvar no arquivo: {e}")
+    def listar(self):
+        urls = []
+        for dominio, no in self._arvore.items():
+            self._coletar(dominio, no, urls)
+        return sorted(urls)
 
-    def listar(self) -> list:
-        """
-        Retorna todas as URLs cadastradas.
-        """
-        return sorted(self._urls)
+    def _coletar(self, prefixo, no, resultado):
+        resultado.append(prefixo)
+        for filho, no_filho in no["filhos"].items():
+            self._coletar(f"{prefixo}/{filho}", no_filho, resultado)
 
-    def total(self) -> int:
-        """
-        Retorna a quantidade de URLs cadastradas.
-        """
-        return len(self._urls)
+    def total(self):
+        return len(self.listar())

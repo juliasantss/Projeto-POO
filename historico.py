@@ -1,70 +1,41 @@
-"""
-historico.py
-Módulo responsável por controlar o histórico de navegação.
-
-Grupo: Enquanto Funcionar Tá Bom
-Disciplina: Programação Orientada a Objetos
-"""
-
+# historico.py
+# controla o historico de navegacao do browser
+# usa uma pilha pra guardar as paginas visitadas
+# Grupo 05 - Enquanto Funcionar Ta Bom
 
 class Historico:
-    """
-    Classe que representa o histórico do navegador.
-
-    Funciona como uma pilha (LIFO):
-    a última página acessada é a primeira a sair no #back.
-    """
+    # pilha de paginas visitadas
+    # funciona como LIFO: ultima que entrou, primeira a sair no #back
 
     def __init__(self):
-        """Cria um histórico vazio."""
         self._paginas = []
 
-    def adicionar(self, url: str) -> None:
-        """
-        Adiciona uma URL ao histórico.
-
-        Raises:
-            ValueError se a URL for vazia.
-        """
+    def adicionar(self, url):
+        # nao deixa adicionar url vazia
         if not url or not url.strip():
-            raise ValueError("Não é possível adicionar uma URL vazia.")
+            raise ValueError("URL vazia nao pode entrar no historico")
         self._paginas.append(url.strip())
 
-    def voltar(self) -> str:
-        """
-        Remove e retorna a última página visitada (#back).
-
-        Raises:
-            IndexError se o histórico estiver vazio.
-        """
+    def voltar(self):
+        # tira e retorna a ultima pagina (comando #back)
         if self.esta_vazio():
-            raise IndexError("Histórico vazio.")
+            raise IndexError("Nao tem pagina anterior no historico")
         return self._paginas.pop()
 
-    def ultima_pagina(self) -> str:
-        """
-        Retorna a última página sem remover.
-        """
+    def ultima_pagina(self):
+        # ve o topo sem remover
         if self.esta_vazio():
             return ""
         return self._paginas[-1]
 
-    def esta_vazio(self) -> bool:
-        """
-        Verifica se o histórico está vazio.
-        """
+    def esta_vazio(self):
         return len(self._paginas) == 0
 
-    def listar(self) -> list:
-        """
-        Retorna todas as páginas visitadas.
-        """
+    def listar(self):
+        # retorna copia pra nao mexer na lista original
         return list(self._paginas)
 
-    def __str__(self) -> str:
-        """
-        Mostra o histórico no formato exibido no terminal.
-        """
+    def __str__(self):
         if self.esta_vazio():
             return "[ ]"
-        return " ".join(f"[{url}]" for url in self._paginas)
+        return " ".join(f"[{p}]" for p in self._paginas)
