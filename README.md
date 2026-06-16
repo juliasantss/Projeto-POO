@@ -14,8 +14,8 @@ O Browser Simulator simula o funcionamento básico de um navegador web no termin
 
 O projeto foi desenvolvido em dois checkpoints:
 
-- **CP1** — estrutura base: histórico de navegação, banco de URLs e comandos principais
-- **CP2** — páginas internas: árvore de URLs, exibição de conteúdo de arquivos e novos comandos
+- **CP1** - estrutura base: histórico de navegação, banco de URLs e comandos principais
+- **CP2** - páginas internas: árvore de URLs, exibição de conteúdo de arquivos e novos comandos
 
 ---
 
